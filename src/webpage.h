@@ -1,0 +1,323 @@
+/*
+  webpage.h
+  Webサーバーで使用するHTML
+
+  Copyright (c) 2025 Kaz  (https://akibabara.com/blog/)
+  Released under the MIT license.
+  see https://opensource.org/licenses/MIT
+*/
+
+static const char HTMLPAGE_TOP[] PROGMEM = R"EOT(
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ファイル バックアップページ</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+			font-family: 'Helvetica Neue', Arial, sans-serif;
+		}
+		
+		body {
+			background-color: #f5f5f5;
+			color: #333;
+			line-height: 1.6;
+			padding: 20px;
+			max-width: 800px;
+			margin: 0 auto;
+		}
+		
+		h1 {
+			color: #2c3e50;
+			text-align: center;
+			margin-bottom: 30px;
+			padding-bottom: 15px;
+			border-bottom: 1px solid #ddd;
+		}
+		
+		.title-container {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin: 25px 0 15px 0;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #eee;
+		}
+		
+		h2 {
+			color: #3498db;
+			margin: 0;
+		}
+		
+		.reload-btn {
+			background-color: #ecf0f1;
+			color: #7f8c8d;
+			border: 1px solid #ddd;
+			padding: 6px 12px;
+			font-size: 13px;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		
+		.reload-btn:hover {
+			background-color: #e0e0e0;
+			color: #34495e;
+		}
+		
+		.file-list {
+			list-style: none;
+			margin-bottom: 30px;
+		}
+		
+		.file-list li {
+			margin-bottom: 12px;
+			background: white;
+			border-radius: 5px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		
+		.file-list a {
+			display: block;
+			padding: 15px;
+			color: #2980b9;
+			text-decoration: none;
+			transition: background-color 0.2s;
+			flex-grow: 1;
+		}
+		
+		.file-list a:hover {
+			background-color: #f9f9f9;
+		}
+		
+		.delete-btn {
+			background-color: #ecf0f1;
+			color: #7f8c8d;
+			border: 1px solid #ddd;
+			padding: 6px 12px;
+			margin-right: 15px;
+			font-size: 13px;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		
+		.delete-btn:hover {
+			background-color: #e0e0e0;
+			color: #34495e;
+		}
+		
+		.upload-section {
+			margin-top: 20px;
+			text-align: center;
+			background: white;
+			padding: 20px;
+			border-radius: 5px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		
+		.file-input {
+			display: none;
+		}
+		
+		.upload-btn {
+			background-color: #3498db;
+			color: white;
+			border: none;
+			padding: 12px 25px;
+			margin-top: 10px;
+			font-size: 16px;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+		
+		.upload-btn:hover {
+			background-color: #2980b9;
+		}
+		
+		.file-label {
+			display: inline-block;
+			padding: 8px 16px;
+			background-color: #f5f5f5;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			cursor: pointer;
+			margin-bottom: 10px;
+			font-size: 14px;
+			transition: all 0.2s;
+			color: #333;
+		}
+		
+		.file-label:hover {
+			background-color: #e0e0e0;
+		}
+		
+		.selected-file {
+			margin: 10px 0;
+			font-size: 14px;
+			color: #666;
+		}
+		
+		.loading {
+			text-align: center;
+			padding: 20px;
+			color: #7f8c8d;
+		}
+		
+		.error {
+			background-color: #fdedec;
+			color: #c0392b;
+			padding: 10px;
+			border-radius: 5px;
+			margin-bottom: 20px;
+			text-align: center;
+		}
+		
+		/* スマートフォン向けスタイル調整 */
+		@media (max-width: 600px) {
+			body {
+				padding: 15px;
+			}
+			
+			h1 {
+				font-size: 24px;
+			}
+			
+			h2 {
+				font-size: 20px;
+			}
+			
+			.file-list a {
+				padding: 18px 15px;
+				font-size: 18px;
+			}
+			
+			.delete-btn, .reload-btn {
+				padding: 8px 12px;
+				font-size: 14px;
+			}
+			
+			.upload-btn, .file-label {
+				width: 100%;
+				padding: 15px;
+			}
+			
+			.upload-section {
+				padding: 15px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<!--h1>ファイル バックアップページ</h1-->
+	
+	<div class="title-container">
+		<h2>ファイル 一覧</h2>
+		<button class="reload-btn" onclick="reloadFileList()">再読込</button>
+	</div>
+	<div id="file-list-container">
+		<div class="loading">ファイル一覧を読み込み中...</div>
+	</div>
+	
+	<h2>ファイル アップロード</h2>
+	<div class="upload-section">
+		<form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+			<label for="file-upload" class="file-label">ファイルを選択</label>
+			<input type="file" id="file-upload" name="file" class="file-input" onchange="updateFileName()">
+			<div id="selected-file" class="selected-file">ファイルが選択されていません</div>
+			<button type="submit" class="upload-btn">アップロード</button>
+		</form>
+	</div>
+
+	<script>
+		// ページ読み込み時にファイル一覧を取得
+		document.addEventListener('DOMContentLoaded', function() {
+			fetchFileList();
+		});
+		
+		// ファイル一覧を再読み込み
+		function reloadFileList() {
+			document.getElementById('file-list-container').innerHTML = '<div class="loading">ファイル一覧を読み込み中...</div>';
+			fetchFileList();
+		}
+		
+		// ファイル一覧を取得する関数
+		function fetchFileList() {
+			fetch('/files.json')
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('ファイル一覧の取得に失敗しました');
+					}
+					return response.json();
+				})
+				.then(data => {
+					displayFileList(data);
+				})
+				.catch(error => {
+					displayError(error.message);
+				});
+		}
+		
+		// ファイル一覧を表示する関数
+		function displayFileList(data) {
+			const container = document.getElementById('file-list-container');
+			
+			if (!data.files || data.files.length === 0) {
+				container.innerHTML = '<p>ファイルはありません</p>';
+				return;
+			}
+			
+			let html = '<ul class="file-list">';
+			
+			data.files.forEach(file => {
+				html += `
+					<li>
+						<a href="/download?filename=${file.name}">${file.name}</a>
+						<button class="delete-btn" onclick="confirmDelete('${file.name}')">削除</button>
+					</li>
+				`;
+			});
+			
+			html += '</ul>';
+			container.innerHTML = html;
+		}
+		
+		// エラーを表示する関数
+		function displayError(message) {
+			const container = document.getElementById('file-list-container');
+			container.innerHTML = `<div class="error">${message}</div>`;
+		}
+		
+		// ファイル削除の確認
+		function confirmDelete(filename) {
+			if (confirm('削除しますか？')) {
+				// GETリクエストを作成
+				location.href = '/delete?filename=' + encodeURIComponent(filename);
+			}
+		}
+		
+		// 選択されたファイル名を表示
+		function updateFileName() {
+			const fileInput = document.getElementById('file-upload');
+			const fileInfo = document.getElementById('selected-file');
+			
+			if (fileInput.files.length > 0) {
+				const fileName = fileInput.files[0].name;
+				const fileSize = Math.round(fileInput.files[0].size / 1024); // KB単位
+				fileInfo.textContent = `${fileName} (${fileSize} KB)`;
+			} else {
+				fileInfo.textContent = 'ファイルが選択されていません';
+			}
+		}
+	</script>
+</body>
+</html>
+)EOT";
